@@ -148,6 +148,60 @@ class Controller {
 	static initPage() {
 		let computer = new Computer();
 		View.createPage();
+		Controller.getData(computer);
+	}
+
+	static getData(computer) {
+		let cpuBrand = document.getElementById("cpuBrand");
+		let cpuModel = document.getElementById("cpuModel");
+
+		Controller.selectBrand("cpu", cpuBrand, cpuModel, computer);
+	}
+
+	static selectBrand(parts, brandSelect, modelSelect, computer) {
+		fetch(config.url + parts).then(response => response.json()).then(function(data) {
+			let brandData = Controller.getBrandData(data);
+			for (let key in brandData) {
+				// console.log(key)
+				let option = document.createElement("option");
+				option.innerHTML = key;
+				option.value = key;
+				brandSelect.append(option);
+			}
+
+			brandSelect.addEventListener("change", function() {
+				Controller.selectModel(parts, brandSelect.value, modelSelect, computer);
+			});
+		});
+	}
+
+	static selectModel(parts, brandName, modelSelect, computer) {
+		fetch(config.url + parts).then(response => response.json()).then(function(data) {
+			let modelData = Controller.getModelData(data);
+			for (let i in modelData[brandName]) {
+				let option = document.createElement("option");
+				option.innerHTML = modelData[brandName][i];
+				option.value = modelData[brandName][i];
+				modelSelect.append(option);
+			}
+		});
+	}
+
+	static getBrandData(data) {
+		let brandData = {};
+		for (let i in data) {
+			brandData[data[i].Brand] = data[i].Brand;
+		}
+		return brandData;
+	}
+
+	static getModelData(data) {
+		let modelData = {};
+		for (let i in data) {
+			if (!modelData[data[i].Brand]) modelData[data[i].Brand] = [];
+			modelData[data[i].Brand].push(data[i].Model);
+		}
+		return modelData;
 	}
 }
 
