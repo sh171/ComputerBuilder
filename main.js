@@ -20,6 +20,18 @@ class Computer {
 		this.storageModel = null;
 		this.storagebenchmark = null;
 	}
+
+	static addBrandData(parts, brand, computer) {
+		if (parts === "cpu") computer.cpuBrand = brand;
+		else if (parts === "gpu") computer.gpuBrand = brand;
+		else if (parts === "ram") computer.ramBrand = brand;
+	}
+
+	static addModelData(parts, model, computer) {
+		if (parts === "cpu") computer.cpuModel = model;
+		else if (parts === "gpu") computer.gpuModel = model;
+		else if (parts === "ram") computer.ramModel = model;
+	}
 }
 
 class View {
@@ -154,15 +166,22 @@ class Controller {
 	static getData(computer) {
 		let cpuBrand = document.getElementById("cpuBrand");
 		let cpuModel = document.getElementById("cpuModel");
+		let gpuBrand = document.getElementById("gpuBrand");
+		let gpuModel = document.getElementById("gpuModel");
+		let ramBrand = document.getElementById("ramBrand");
+		let ramModel = document.getElementById("ramModel");
 
 		Controller.selectBrand("cpu", cpuBrand, cpuModel, computer);
+		Controller.selectBrand("gpu", gpuBrand, gpuModel, computer);
+		Controller.selectNumberOfRam("ram", ramBrand, ramModel, computer);
 	}
 
 	static selectBrand(parts, brandSelect, modelSelect, computer) {
 		fetch(config.url + parts).then(response => response.json()).then(function(data) {
 			let brandData = Controller.getBrandData(data);
+			brandSelect.innerHTML = "<option>-</option>";
+			if (parts === "ram") modelSelect.innerHTML = "<option>-</option>";
 			for (let key in brandData) {
-				// console.log(key)
 				let option = document.createElement("option");
 				option.innerHTML = key;
 				option.value = key;
@@ -178,12 +197,35 @@ class Controller {
 	static selectModel(parts, brandName, modelSelect, computer) {
 		fetch(config.url + parts).then(response => response.json()).then(function(data) {
 			let modelData = Controller.getModelData(data);
-			for (let i in modelData[brandName]) {
-				let option = document.createElement("option");
-				option.innerHTML = modelData[brandName][i];
-				option.value = modelData[brandName][i];
-				modelSelect.append(option);
+			modelSelect.innerHTML = "<option>-</option>";
+
+			if (parts === "ram") {
+				let ramNumber = document.getElementById("ramNum").value;
+				let modelList = [...new Set(modelData[brandName])];
+				let ramModelList = Controller.getRightRamModel(ramNumber, modelList);
+				for (let i=0; i<ramModelList.length; i++) {
+					let option = document.createElement("option");
+					option.innerHTML = ramModelList[i];
+					option.value = ramModelList[i];
+					modelSelect.append(option);
+				}
 			}
+
+			else if (parts === "cpu" || parts === "gpu") {
+				for (let i in modelData[brandName]) {
+					let option = document.createElement("option");
+					option.innerHTML = modelData[brandName][i];
+					option.value = modelData[brandName][i];
+					modelSelect.append(option);
+				}
+			}
+
+			modelSelect.addEventListener("change", function() {
+				Computer.addBrandData(parts, brandName, computer);
+				Computer.addModelData(parts, modelSelect.value, computer);
+				console.log(computer);
+			});
+
 		});
 	}
 
@@ -202,6 +244,22 @@ class Controller {
 			modelData[data[i].Brand].push(data[i].Model);
 		}
 		return modelData;
+	}
+
+	static selectNumberOfRam(parts, brandSelect, modelSelect, computer) {
+		let numberOfRam = document.getElementById("ramNum");
+		numberOfRam.addEventListener("change", function() {
+			Controller.selectBrand(parts, brandSelect, modelSelect, computer);
+		});
+	}
+
+	static getRightRamModel(ramNum, modelList) {
+		let pattern = new RegExp(ramNum + 'x');
+		let list = [];
+		for (let i=0; i<modelList.length; i++) {
+			if (pattern.test(modelList[i])) list.push(modelList[i]);
+		}
+		return list;
 	}
 }
 
