@@ -39,11 +39,18 @@ class Computer {
 		computer.storageType = type;
 		computer.storageSize = size;
 	}
+
+	static addBenchmark(parts, benchmark, computer) {
+		if (parts === "cpu") computer.cpuBenchmark = benchmark;
+		else if (parts === "gpu") computer.gpuBenchmark = benchmark;
+		else if (parts === "ram") computer.ramBenchmark = benchmark;
+		else if (parts === "hdd" || parts === "ssd") computer.storagebenchmark = benchmark;
+	}
 }
 
 class View {
 
-	static createPage() {
+	static createPage(computer) {
 		let parent = config.parent;
 		parent.innerHTML = 
 		`
@@ -159,6 +166,11 @@ class View {
                 <div  id="buildComputer"><div>
 			</div>
 		`;
+
+		let addBtn = document.querySelectorAll("#addBtn")[0];
+		addBtn.addEventListener("click", function() {
+			Controller.calculatePcScore(computer);
+		});
 	}
 }
 
@@ -166,7 +178,7 @@ class Controller {
 
 	static initPage() {
 		let computer = new Computer();
-		View.createPage();
+		View.createPage(computer);
 		Controller.getData(computer);
 	}
 
@@ -257,7 +269,9 @@ class Controller {
 			modelSelect.addEventListener("change", function() {
 				Computer.addBrandData(parts, brandName, computer);
 				Computer.addModelData(parts, modelSelect.value, computer);
-				console.log(computer);
+
+				Controller.getBenchmarkData(parts, modelSelect.value, computer);
+				// console.log(computer);
 			});
 
 		});
@@ -348,11 +362,26 @@ class Controller {
         return sizeList;
     }
 
+    static getBenchmarkData(parts, modelName, computer) {
+    	fetch(config.url + parts).then(response => response.json()).then(function(data) {
+    		let benchmarkData = {};
+    		for (let i in data) {
+    			benchmarkData[data[i].Model] = data[i].Benchmark;
+    		}
+    		let benchmark = benchmarkData[modelName];
+    		Computer.addBenchmark(parts, benchmark, computer);
+    	});
+    }
+
     static convertToGB(value) {
         let [number, unit] = value.match(/(\d+)(TB|GB)/).slice(1);
         number = parseInt(number, 10);
         if (unit === 'TB') return number * 1024; // convert TB to GB
         return number;
+	}
+
+	static calculatePcScore(computer) {
+		console.log(computer);
 	}
 }
 
