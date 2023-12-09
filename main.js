@@ -25,12 +25,19 @@ class Computer {
 		if (parts === "cpu") computer.cpuBrand = brand;
 		else if (parts === "gpu") computer.gpuBrand = brand;
 		else if (parts === "ram") computer.ramBrand = brand;
+		else if (parts === "hdd" || parts === "ssd") computer.storageBrand = brand;
 	}
 
 	static addModelData(parts, model, computer) {
 		if (parts === "cpu") computer.cpuModel = model;
 		else if (parts === "gpu") computer.gpuModel = model;
 		else if (parts === "ram") computer.ramModel = model;
+		else if (parts === "hdd" || parts === "ssd") computer.storageModel = model;
+	}
+
+	static addStorageTypeAndSize(type, size, computer) {
+		computer.storageType = type;
+		computer.storageSize = size;
 	}
 }
 
@@ -170,17 +177,20 @@ class Controller {
 		let gpuModel = document.getElementById("gpuModel");
 		let ramBrand = document.getElementById("ramBrand");
 		let ramModel = document.getElementById("ramModel");
+		let storageBrand = document.getElementById("storageBrand");
+		let storageModel = document.getElementById("storageModel");
 
 		Controller.selectBrand("cpu", cpuBrand, cpuModel, computer);
 		Controller.selectBrand("gpu", gpuBrand, gpuModel, computer);
 		Controller.selectNumberOfRam("ram", ramBrand, ramModel, computer);
+		Controller.selectStorageType(storageBrand, storageModel, computer);
 	}
 
 	static selectBrand(parts, brandSelect, modelSelect, computer) {
 		fetch(config.url + parts).then(response => response.json()).then(function(data) {
 			let brandData = Controller.getBrandData(data);
 			brandSelect.innerHTML = "<option>-</option>";
-			if (parts === "ram") modelSelect.innerHTML = "<option>-</option>";
+			// if (parts === "ram" || parts === "hdd" || parts === "ssd") modelSelect.innerHTML = "<option>-</option>";
 			for (let key in brandData) {
 				let option = document.createElement("option");
 				option.innerHTML = key;
@@ -199,7 +209,31 @@ class Controller {
 			let modelData = Controller.getModelData(data);
 			modelSelect.innerHTML = "<option>-</option>";
 
-			if (parts === "ram") {
+			// check the modelData[brandName] is undefined or not
+			if (!modelData[brandName]) {
+            console.error(`No models found for brand: ${brandName}`);
+            return; // Early return prevents further processing
+        	}
+
+			if (parts === "hdd" || parts === "ssd") {
+				let storageSize = document.getElementById("storageSize").value;
+				let storageModelList = Controller.getStorageModelData(storageSize, modelData[brandName]);
+
+				// check the modelData[brandName] is undefined or not
+				if (!storageModelList) {
+			        console.error(`No models found for the selected size and brand: ${brandName}`);
+			        return; // Early return prevents further processing
+			    }
+
+				for (let i=0; i<storageModelList.length; i++) {
+					let option = document.createElement("option");
+					option.innerHTML = storageModelList[i];
+					option.value = storageModelList[i];
+					modelSelect.append(option);
+				}
+			}
+
+			else if (parts === "ram") {
 				let ramNumber = document.getElementById("ramNum").value;
 				let modelList = [...new Set(modelData[brandName])];
 				let ramModelList = Controller.getRightRamModel(ramNumber, modelList);
@@ -229,6 +263,38 @@ class Controller {
 		});
 	}
 
+	static selectNumberOfRam(parts, brandSelect, modelSelect, computer) {
+		let numberOfRam = document.getElementById("ramNum");
+		numberOfRam.addEventListener("change", function() {
+			Controller.selectBrand(parts, brandSelect, modelSelect, computer);
+		});
+	}
+
+	static selectStorageType(brandSelect, modelSelect, computer) {
+		let storageType = document.getElementById("storageType");
+		storageType.addEventListener("change", function() {
+			Controller.selectStorageSize(storageType.value.toLowerCase(), brandSelect, modelSelect, computer);
+		});
+	}
+
+	static selectStorageSize(parts, brandSelect, modelSelect, computer) {
+		fetch(config.url + parts).then(response => response.json()).then(function(data) {
+			let storageSize = document.getElementById("storageSize");
+			storageSize.innerHTML = "<option>-</option>";
+			let storageSizeData = Controller.getstorageSizeData(data);
+			for (let i=0; i<storageSizeData.length; i++) {
+				let option = document.createElement("option");
+				option.innerHTML = storageSizeData[i];
+				option.value = storageSizeData[i];
+				storageSize.append(option);
+			}
+			storageSize.addEventListener("change", function() {
+				Computer.addStorageTypeAndSize(parts.toUpperCase(), storageSize.value, computer);
+				Controller.selectBrand(parts, brandSelect, modelSelect, computer);
+			});
+		});
+	}
+
 	static getBrandData(data) {
 		let brandData = {};
 		for (let i in data) {
@@ -246,13 +312,6 @@ class Controller {
 		return modelData;
 	}
 
-	static selectNumberOfRam(parts, brandSelect, modelSelect, computer) {
-		let numberOfRam = document.getElementById("ramNum");
-		numberOfRam.addEventListener("change", function() {
-			Controller.selectBrand(parts, brandSelect, modelSelect, computer);
-		});
-	}
-
 	static getRightRamModel(ramNum, modelList) {
 		let pattern = new RegExp(ramNum + 'x');
 		let list = [];
@@ -260,6 +319,40 @@ class Controller {
 			if (pattern.test(modelList[i])) list.push(modelList[i]);
 		}
 		return list;
+	}
+
+	static getStorageModelData(size, modelList) {
+		let pattern = new RegExp(size);
+		let list = [];
+		for (let i=0; i<modelList.length; i++) {
+			if (pattern.test(modelList[i])) list.push(modelList[i]);
+		}		
+		list = [...new Set(list)];
+		return list;
+	}
+
+	static getstorageSizeData(data) {
+        let sizeList = [];
+        for (let i in data) {
+            let gbMatch = data[i].Model.match(/(\d+)GB/);
+            let tbMatch = data[i].Model.match(/(\d+)TB/);
+
+            if (gbMatch) sizeList.push(gbMatch[0]);
+            if (tbMatch) sizeList.push(tbMatch[0]);
+        }
+        
+        sizeList = [...new Set(sizeList)];
+        sizeList.sort((a, b) => {
+            return Controller.convertToGB(a) - Controller.convertToGB(b);
+        });
+        return sizeList;
+    }
+
+    static convertToGB(value) {
+        let [number, unit] = value.match(/(\d+)(TB|GB)/).slice(1);
+        number = parseInt(number, 10);
+        if (unit === 'TB') return number * 1024; // convert TB to GB
+        return number;
 	}
 }
 
