@@ -8,3 +8,5 @@ Within the application, the primary components you will work with are the CPU, G
 ## Description
 This application enables users to assemble a multitude of computers and evaluate their performance based on criteria tailored for gaming or work-related tasks. The components available for selection are categorized by brand and model. It uses API to retrieve data in an asynchronous process.
 Detailed information about RAM and storage options is accessible through the model names of each component. This feature allows users to make informed decisions when choosing parts, ensuring they build a computer that meets their specific needs for either gaming or productivity.
+
+Link Page: https://sh171.github.io/ComputerBuilder/
