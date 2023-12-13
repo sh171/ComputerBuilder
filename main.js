@@ -18,7 +18,7 @@ class Computer {
 		this.storageSize = null;
 		this.storageBrand = null;
 		this.storageModel = null;
-		this.storagebenchmark = null;
+		this.storageBenchmark = null;
 	}
 
 	static addBrandData(parts, brand, computer) {
@@ -44,8 +44,24 @@ class Computer {
 		if (parts === "cpu") computer.cpuBenchmark = benchmark;
 		else if (parts === "gpu") computer.gpuBenchmark = benchmark;
 		else if (parts === "ram") computer.ramBenchmark = benchmark;
-		else if (parts === "hdd" || parts === "ssd") computer.storagebenchmark = benchmark;
-	}
+		else if (parts === "hdd" || parts === "ssd") computer.storageBenchmark = benchmark;
+    }
+
+	static calculateGamingScore(computer){
+        let cpuScore = parseInt(computer.cpuBenchmark * 0.25);
+        let gpuScore = parseInt(computer.gpuBenchmark * 0.6);
+        let ramScore = parseInt(computer.ramBenchmark * 0.125);
+        let storageScore = computer.storageType === "SSD" ? parseInt(computer.storageBenchmark * 0.1) : parseInt(computer.storageBenchmark * 0.025);
+        return cpuScore + gpuScore + ramScore + storageScore;
+    }
+
+    static calculateWorkingScore(computer){
+        let cpuScore = parseInt(computer.cpuBenchmark * 0.6);
+        let gpuScore = parseInt(computer.gpuBenchmark * 0.25);
+        let ramScore = parseInt(computer.ramBenchmark * 0.1);
+        let storageScore = parseInt(computer.storageBenchmark * 0.05);
+        return cpuScore + gpuScore + ramScore + storageScore;
+    }
 }
 
 class View {
@@ -66,13 +82,13 @@ class View {
 						<div class="d-flex flex-wrap">
 							<div class="col-sm-12 col-lg-5">
 								<label class="font-weight-bold" for="cpuBrand">Brand</label>
-								<select class="custom-select" id="cpuBrand">
+								<select class="custom-select parts" id="cpuBrand">
 		                            <option>-</option>
 		                        </select>
 		                    </div>
 		                    <div class="col-sm-12 col-lg-5">
 		                    	<label class="font-weight-bold" for="cpuModel">Model</label>
-								<select class="custom-select" id="cpuModel">
+								<select class="custom-select parts" id="cpuModel">
 		                            <option>-</option>
 		                        </select>
 		                    </div>
@@ -85,13 +101,13 @@ class View {
 						<div class="d-flex flex-wrap">
 							<div class="col-sm-12 col-lg-5">
 								<label class="font-weight-bold" for="gpuBrand">Brand</label>
-								<select class="custom-select" id="gpuBrand">
+								<select class="custom-select parts" id="gpuBrand">
 		                            <option>-</option>
 		                        </select>
 		                    </div>
 		                    <div class="col-sm-12 col-lg-5">
 		                    	<label class="font-weight-bold" for="gpuModel">Model</label>
-								<select class="custom-select" id="gpuModel">
+								<select class="custom-select parts" id="gpuModel">
 		                            <option>-</option>
 		                        </select>
 		                    </div>
@@ -104,7 +120,7 @@ class View {
 						<div class="d-flex flex-wrap">
 							<div class="col-sm-12 col-lg-5">
 								<label class="font-weight-bold" for="ramNum">How many?</label>
-								<select class="custom-select" id="ramNum">
+								<select class="custom-select parts" id="ramNum">
 		                            <option>-</option>
 		                            <option>1</option>
 		                            <option>2</option>
@@ -114,13 +130,13 @@ class View {
 		                    </div>
 							<div class="col-sm-12 col-lg-5">
 								<label class="font-weight-bold" for="ramBrand">Brand</label>
-								<select class="custom-select" id="ramBrand">
+								<select class="custom-select parts" id="ramBrand">
 		                            <option>-</option>
 		                        </select>
 		                    </div>
 		                    <div class="col-sm-12 col-lg-5">
 		                    	<label class="font-weight-bold" for="ramModel">Model</label>
-								<select class="custom-select" id="ramModel">
+								<select class="custom-select parts" id="ramModel">
 		                            <option>-</option>
 		                        </select>
 		                    </div>
@@ -133,7 +149,7 @@ class View {
 						<div class="d-flex flex-wrap">
 							<div class="col-sm-12 col-lg-5">
 								<label class="font-weight-bold" for="storageType">HDD or SSD</label>
-								<select class="custom-select" id="storageType">
+								<select class="custom-select parts" id="storageType">
 		                            <option>-</option>
 		                            <option>HDD</option>
 		                            <option>SSD</option>
@@ -141,19 +157,19 @@ class View {
 		                    </div>
 		                    <div class="col-sm-12 col-lg-5">
 								<label class="font-weight-bold" for="storageSize">Storage</label>
-								<select class="custom-select" id="storageSize">
+								<select class="custom-select parts" id="storageSize">
 		                            <option>-</option>
 		                        </select>
 		                    </div>
 							<div class="col-sm-12 col-lg-5">
 								<label class="font-weight-bold" for="storageBrand">Brand</label>
-								<select class="custom-select" id="storageBrand">
+								<select class="custom-select parts" id="storageBrand">
 		                            <option>-</option>
 		                        </select>
 		                    </div>
 		                    <div class="col-sm-12 col-lg-5">
 		                    	<label class="font-weight-bold" for="storageModel">Model</label>
-								<select class="custom-select" id="storageModel">
+								<select class="custom-select parts" id="storageModel">
 		                            <option>-</option>
 		                        </select>
 		                    </div>
@@ -171,6 +187,47 @@ class View {
 		addBtn.addEventListener("click", function() {
 			Controller.calculatePcScore(computer);
 		});
+	}
+
+	static displayComputer(gamingScore, workingScore, computer) {
+		let buildComputer = document.getElementById("buildComputer");
+		let container = document.createElement("div");
+		container.classList.add("bg-primary", "m-2", "text-white");
+		container.innerHTML = 
+		`
+			<h1 class="text-center p-3">Your Computer</h1>
+			<div class="col-12">
+				<h1>CPU</h1>
+				<p>Brand: ${computer.cpuBrand}</p>
+				<p>Model: ${computer.cpuModel}</p>
+			</div>
+			<div class="col-12">
+				<h1>GPU</h1>
+				<p>Brand: ${computer.gpuBrand}</p>
+				<p>Model: ${computer.gpuModel}</p>
+			</div>
+			<div class="col-12">
+				<h1>RAM</h1>
+				<p>Brand: ${computer.ramBrand}</p>
+				<p>Model: ${computer.ramModel}</p>
+			</div>
+			<div class="col-12">
+				<h1>STORAGE</h1>
+				<p>Disk: ${computer.storageType}</p>
+				<p>Storage: ${computer.storageSize}</p>
+				<p>Brand: ${computer.storageBrand}</p>
+				<p>Model: ${computer.storageModel}</p>
+			</div>
+			<div class="d-flex justify-content-around col-12 pt-3">
+				<div>
+					<h3>Gaming: ${gamingScore}%</h3>
+				</div>
+				<div>
+					<h3>Working: ${workingScore}%</h3>
+				</div>
+			</div>
+		`;
+		buildComputer.append(container);
 	}
 }
 
@@ -202,7 +259,6 @@ class Controller {
 		fetch(config.url + parts).then(response => response.json()).then(function(data) {
 			let brandData = Controller.getBrandData(data);
 			brandSelect.innerHTML = "<option>-</option>";
-			// if (parts === "ram" || parts === "hdd" || parts === "ssd") modelSelect.innerHTML = "<option>-</option>";
 			for (let key in brandData) {
 				let option = document.createElement("option");
 				option.innerHTML = key;
@@ -221,29 +277,17 @@ class Controller {
 			let modelData = Controller.getModelData(data);
 			modelSelect.innerHTML = "<option>-</option>";
 
-			// check the modelData[brandName] is undefined or not
-			if (!modelData[brandName]) {
-            console.error(`No models found for brand: ${brandName}`);
-            return; // Early return prevents further processing
-        	}
-
-			if (parts === "hdd" || parts === "ssd") {
-				let storageSize = document.getElementById("storageSize").value;
-				let storageModelList = Controller.getStorageModelData(storageSize, modelData[brandName]);
-
-				// check the modelData[brandName] is undefined or not
-				if (!storageModelList) {
-			        console.error(`No models found for the selected size and brand: ${brandName}`);
-			        return; // Early return prevents further processing
-			    }
-
-				for (let i=0; i<storageModelList.length; i++) {
-					let option = document.createElement("option");
-					option.innerHTML = storageModelList[i];
-					option.value = storageModelList[i];
-					modelSelect.append(option);
-				}
-			}
+			let storageType = document.getElementById("storageType").value;
+	        if ((parts === "hdd" || parts === "ssd") && storageType.toLowerCase() === parts.toLowerCase()) {
+	            let storageSize = document.getElementById("storageSize").value;
+	            let storageModelList = Controller.getStorageModelData(storageSize, modelData[brandName]);
+	            for (let i=0; i<storageModelList.length; i++) {
+	                let option = document.createElement("option");
+	                option.innerHTML = storageModelList[i];
+	                option.value = storageModelList[i];
+	                modelSelect.append(option);
+	            }
+	        }
 
 			else if (parts === "ram") {
 				let ramNumber = document.getElementById("ramNum").value;
@@ -271,7 +315,6 @@ class Controller {
 				Computer.addModelData(parts, modelSelect.value, computer);
 
 				Controller.getBenchmarkData(parts, modelSelect.value, computer);
-				// console.log(computer);
 			});
 
 		});
@@ -329,18 +372,14 @@ class Controller {
 	static getRightRamModel(ramNum, modelList) {
 		let pattern = new RegExp(ramNum + 'x');
 		let list = [];
-		for (let i=0; i<modelList.length; i++) {
-			if (pattern.test(modelList[i])) list.push(modelList[i]);
-		}
+		for (let i=0; i<modelList.length; i++) if (pattern.test(modelList[i])) list.push(modelList[i]);
 		return list;
 	}
 
 	static getStorageModelData(size, modelList) {
 		let pattern = new RegExp(size);
 		let list = [];
-		for (let i=0; i<modelList.length; i++) {
-			if (pattern.test(modelList[i])) list.push(modelList[i]);
-		}		
+		for (let i=0; i<modelList.length; i++) if (pattern.test(modelList[i])) list.push(modelList[i]);
 		list = [...new Set(list)];
 		return list;
 	}
@@ -348,8 +387,8 @@ class Controller {
 	static getstorageSizeData(data) {
         let sizeList = [];
         for (let i in data) {
-            let gbMatch = data[i].Model.match(/(\d+)GB/);
-            let tbMatch = data[i].Model.match(/(\d+)TB/);
+            let gbMatch = data[i].Model.match(/(\d+(?:\.\d+)?)GB/);
+            let tbMatch = data[i].Model.match(/(\d+(?:\.\d+)?)TB/);
 
             if (gbMatch) sizeList.push(gbMatch[0]);
             if (tbMatch) sizeList.push(tbMatch[0]);
@@ -363,25 +402,34 @@ class Controller {
     }
 
     static getBenchmarkData(parts, modelName, computer) {
+    	if (parts === "hdd" || parts === "ssd") {
+    		parts = document.getElementById("storageType").value.toLowerCase();
+    	}
     	fetch(config.url + parts).then(response => response.json()).then(function(data) {
     		let benchmarkData = {};
-    		for (let i in data) {
-    			benchmarkData[data[i].Model] = data[i].Benchmark;
-    		}
+    		for (let i in data) benchmarkData[data[i].Model] = data[i].Benchmark;
     		let benchmark = benchmarkData[modelName];
     		Computer.addBenchmark(parts, benchmark, computer);
     	});
     }
 
     static convertToGB(value) {
-        let [number, unit] = value.match(/(\d+)(TB|GB)/).slice(1);
-        number = parseInt(number, 10);
+        let [number, unit] = value.match(/(\d+(?:\.\d+)?)(TB|GB)/).slice(1);
+        number = parseFloat(number);
         if (unit === 'TB') return number * 1024; // convert TB to GB
         return number;
 	}
 
 	static calculatePcScore(computer) {
-		console.log(computer);
+		let fillInCheck = document.querySelectorAll(".parts");
+		for (let i=0; i<fillInCheck.length; i++) {
+			if (fillInCheck[i].value === "-") return alert("Please fill in all forms");
+		}
+
+		let gamingScore = Computer.calculateGamingScore(computer);
+		let workingScore = Computer.calculateWorkingScore(computer);
+		
+		View.displayComputer(gamingScore, workingScore, computer);
 	}
 }
 
