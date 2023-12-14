@@ -3,6 +3,8 @@
 ## Overview
 This application is designed for building computers. User will select various parts and simulating how these components come together to create a computer with specific performance characteristics.
 
+This process utilizes an API for asynchronous data retrieval. It evaluates the computer's capabilities based on the components selected by the user, comparing their effectiveness for either work or gaming applications.
+
 Within the application, the primary components you will work with are the CPU, GPU, Memory, and Storage. The core functionality of this app allows you to choose these parts to assemble a virtual computer. Once assembled, the app enables you to evaluate and compare the performance of this virtual computer.
 
 ## Description
